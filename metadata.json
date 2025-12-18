@@ -1,0 +1,5 @@
+{
+  "name": "Vanilla JS Pokémon-style RPG",
+  "description": "A classic 2D tile-based RPG engine replicating Pokémon mechanics with a camera system, collisions, and sprite animations using vanilla JavaScript.",
+  "requestFramePermissions": []
+}

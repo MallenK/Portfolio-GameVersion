@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dev Portfolio RPG</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #050505;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+        canvas {
+            image-rendering: pixelated;
+            box-shadow: 0 0 50px rgba(0,0,0,0.9);
+        }
+        
+        /* UI Overlay Transitions */
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        .slide-up { animation: slideUp 0.3s ease-out forwards; }
+        .pulse { animation: pulse 2s infinite; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        /* Dialog Box */
+        .dialog-text {
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
+            text-shadow: 1px 1px 0 #000;
+        }
+        
+        /* AI Input & Options */
+        .pixel-input {
+            font-family: 'Courier New', Courier, monospace;
+            background: #111;
+            border: 2px solid #fff;
+            color: #fbbf24; /* yellow-400 */
+            outline: none;
+            box-shadow: 3px 3px 0 #333;
+        }
+        .pixel-btn {
+            font-family: 'Courier New', Courier, monospace;
+            background: #1f2937;
+            border: 2px solid #4b5563;
+            color: white;
+            transition: all 0.1s;
+            text-align: left;
+            padding: 8px 12px;
+        }
+        .pixel-btn.selected, .pixel-btn:hover {
+            background: #fbbf24;
+            color: black;
+            border-color: white;
+            transform: translateX(4px);
+        }
+        .typing-cursor::after {
+            content: '▋';
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* Portfolio Panels */
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(10px);
+            border: 2px solid #374151;
+        }
+
+        /* Scene Transition Overlay */
+        #transitionOverlay {
+            transition: opacity 0.5s ease-in-out;
+            pointer-events: none;
+        }
+        .opacity-0 { opacity: 0; }
+        .opacity-100 { opacity: 1; }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0"
+  }
+}
+</script>
+</head>
+<body class="flex items-center justify-center h-screen w-screen text-white bg-black">
+    <div class="relative group">
+        <canvas id="gameCanvas"></canvas>
+        
+        <!-- Transition Overlay -->
+        <div id="transitionOverlay" class="absolute inset-0 bg-black z-50 opacity-0"></div>
+
+        <!-- Start Screen / Tutorial -->
+        <div id="startScreen" class="absolute inset-0 z-40 bg-black/90 flex flex-col items-center justify-center fade-in">
+            <h1 class="text-4xl md:text-6xl font-bold text-yellow-400 mb-8 tracking-widest text-shadow">PORTFOLIO RPG</h1>
+            
+            <div class="grid grid-cols-2 gap-8 text-center mb-12">
+                <div class="flex flex-col items-center">
+                    <div class="text-gray-400 text-sm mb-2">MOVEMENT</div>
+                    <div class="flex gap-1">
+                        <div class="w-8 h-8 border border-white rounded flex items-center justify-center">←</div>
+                        <div class="w-8 h-8 border border-white rounded flex items-center justify-center">↓</div>
+                        <div class="w-8 h-8 border border-white rounded flex items-center justify-center">↑</div>
+                        <div class="w-8 h-8 border border-white rounded flex items-center justify-center">→</div>
+                    </div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="text-gray-400 text-sm mb-2">INTERACT</div>
+                    <div class="h-8 px-4 border border-white rounded flex items-center justify-center font-bold">SPACE</div>
+                </div>
+            </div>
+
+            <button id="startBtn" class="px-8 py-3 bg-yellow-500 text-black font-bold text-xl rounded hover:bg-yellow-400 transition transform hover:scale-105 shadow-[0_0_15px_rgba(234,179,8,0.5)] pulse">
+                START ADVENTURE
+            </button>
+        </div>
+
+        <!-- HUD (Hidden initially) -->
+        <div id="hud" class="hidden absolute top-4 left-4 bg-black/60 p-3 rounded-lg border border-white/20 text-xs font-mono pointer-events-none z-10">
+            <p class="mb-1"><span class="text-yellow-400">ARROWS</span> Move</p>
+            <p><span class="text-yellow-400">SPACE</span> Interact</p>
+        </div>
+
+        <!-- Interaction Prompt -->
+        <div id="interactionPrompt" class="hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-16 bg-black/80 text-yellow-400 px-4 py-1 rounded-full text-sm font-bold border border-yellow-400/30 shadow-[0_0_15px_rgba(250,204,21,0.3)] animate-bounce pointer-events-none z-10 transition-opacity duration-200">
+            PRESS SPACE
+        </div>
+
+        <!-- Dialog Box -->
+        <div id="dialogBox" class="hidden absolute bottom-4 left-4 right-4 bg-gray-900 border-4 border-white rounded-lg p-4 shadow-xl z-20 flex flex-col slide-up min-h-[150px]">
+            <!-- Name Tag -->
+            <div id="dialogName" class="text-yellow-400 font-bold mb-2 text-sm uppercase tracking-wider hidden">NPC NAME</div>
+            
+            <!-- Main Text -->
+            <div id="dialogContent" class="dialog-text text-lg leading-relaxed flex-grow typing-cursor"></div>
+            
+            <!-- AI Interaction Area -->
+            <div id="aiContainer" class="mt-4 hidden border-t border-gray-700 pt-2">
+                
+                <!-- Thinking Indicator -->
+                <div id="aiThinking" class="hidden text-gray-400 text-sm animate-pulse italic">
+                    Thinking...
+                </div>
+
+                <!-- Input Text Mode -->
+                <div id="aiInputMode" class="hidden flex gap-2 w-full">
+                    <input type="text" id="aiInput" class="pixel-input flex-grow p-2" placeholder="Type your reply..." autocomplete="off">
+                    <button id="aiSendBtn" class="pixel-btn px-4">SEND</button>
+                </div>
+
+                <!-- Options Mode -->
+                <div id="aiOptionsMode" class="hidden grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <!-- Buttons injected via JS -->
+                </div>
+            </div>
+
+            <!-- Continue Indicator -->
+            <div id="dialogNext" class="text-right text-yellow-400 text-sm animate-pulse mt-2 hidden">▼ Press Space</div>
+        </div>
+
+        <!-- Portfolio Modal Panel -->
+        <div id="portfolioPanel" class="hidden absolute inset-0 z-30 flex items-center justify-center p-8 bg-black/50 fade-in">
+            <div class="glass-panel w-full h-full max-w-4xl max-h-[600px] rounded-xl shadow-2xl overflow-hidden flex flex-col relative">
+                <!-- Header -->
+                <div class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center">
+                    <h2 id="panelTitle" class="text-2xl font-bold text-yellow-400">Section Title</h2>
+                    <button id="closeBtn" class="text-gray-400 hover:text-white transition-colors">
+                        <span class="text-xs uppercase mr-2">Close [SPACE]</span> ✕
+                    </button>
+                </div>
+                <!-- Content -->
+                <div id="panelBody" class="p-8 overflow-y-auto flex-grow text-gray-200 space-y-4">
+                    <!-- Dynamic Content Injected Here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="./index.js"></script>
+</body>
+</html>
