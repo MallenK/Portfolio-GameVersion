@@ -1,5 +1,7 @@
+
 /**
- * Map Data Registry
+ * Map Data Registry - Portfolio Game Version
+ * All world grids and visual layers.
  */
 
 export const TILES = {
@@ -35,13 +37,22 @@ export const TILES = {
     CRATE: 29,
     PATH_ALT: 30,
     LILYPAD: 31,
-    // Interiors
     SOFA: 32,
     CHAIR: 33,
     WEIGHTS: 34,
     PUNCHING_BAG: 35,
     BOOKS: 36,
-    STAIRS: 37
+    STAIRS: 37,
+    METAL: 38,
+    STRIPE: 39,
+    MACHINE: 40,
+    CONVEYOR: 41,
+    TREE_TRUNK: 42,
+    PIPE_V: 43,
+    PIPE_H: 44,
+    WARNING_SIGN: 45,
+    TOOLS: 46,
+    CONTROL_PANEL: 47
 };
 
 export const SOLID_TILES = [
@@ -50,160 +61,158 @@ export const SOLID_TILES = [
     TILES.COUNTER, TILES.BED, TILES.BOOKSHELF, TILES.MONITOR,
     TILES.BUSH, TILES.ROCK, TILES.FOUNTAIN,
     TILES.TREE_PINE, TILES.LAMP_ON, TILES.BENCH, TILES.BARREL, TILES.CRATE,
-    TILES.SOFA, TILES.CHAIR, TILES.WEIGHTS, TILES.PUNCHING_BAG, TILES.BOOKS
+    TILES.SOFA, TILES.CHAIR, TILES.WEIGHTS, TILES.PUNCHING_BAG, TILES.BOOKS,
+    TILES.MACHINE, TILES.METAL, TILES.TREE_TRUNK, TILES.CONTROL_PANEL
 ];
 
 const createGrid = (w, h, fill = 0) => Array(h).fill().map(() => Array(w).fill(fill));
 
-const drawRect = (grid, visual, x, y, w, h, borderTile, floorTile) => {
+// --- 1. OVERWORLD (60x60) ---
+const owGrid = createGrid(60, 60, 0); 
+const owVisual = createGrid(60, 60, TILES.GRASS); 
+
+const fillArea = (grid, visual, x, y, w, h, tile, isSolid = false) => {
     for (let iy = y; iy < y + h; iy++) {
         for (let ix = x; ix < x + w; ix++) {
-            if (iy >= 0 && iy < grid.length && ix >= 0 && ix < grid[0].length) {
-                if (ix === x || ix === x + w - 1 || iy === y || iy === y + h - 1) {
-                    grid[iy][ix] = 1; 
-                    visual[iy][ix] = borderTile;
-                } else {
-                    grid[iy][ix] = 0; 
-                    visual[iy][ix] = floorTile;
-                }
+            if (iy >= 0 && iy < visual.length && ix >= 0 && ix < visual[0].length) {
+                visual[iy][ix] = tile;
+                grid[iy][ix] = isSolid ? 1 : 0;
             }
         }
     }
 };
 
-// --- 3x3 BLOCK MATRIX OVERWORLD (60x60) ---
-const OW_WIDTH = 60;
-const OW_HEIGHT = 60;
-const owGrid = createGrid(OW_WIDTH, OW_HEIGHT, 1);
-const owVisual = createGrid(OW_WIDTH, OW_HEIGHT, TILES.TREE_PINE); // Forest Background
-
-// 1. CARVE BLOCKS (A1-C3)
-// Each block is 20x20
-for(let by=0; by<3; by++) {
-    for(let bx=0; bx<3; bx++) {
-        const startX = bx * 20 + 2;
-        const startY = by * 20 + 2;
-        const size = 16;
-        for(let y=startY; y<startY+size; y++) {
-            for(let x=startX; x<startX+size; x++) {
-                owGrid[y][x] = 0;
-                owVisual[y][x] = TILES.GRASS;
+const drawPath = (visual, x1, y1, x2, y2, tile) => {
+    for (let iy = Math.min(y1, y2); iy <= Math.max(y1, y2); iy++) {
+        for (let ix = Math.min(x1, x2); ix <= Math.max(x1, x2); ix++) {
+            if (visual[iy] && visual[iy][ix] !== undefined) {
+                visual[iy][ix] = tile;
             }
         }
-    }
-}
-
-// 2. ROAD SYSTEM (1-2 Tiles wide)
-const drawRoad = (x1, y1, x2, y2, type = TILES.PATH) => {
-    let x = x1, y = y1;
-    const dx = Math.abs(x2 - x1), sx = x1 < x2 ? 1 : -1;
-    const dy = -Math.abs(y2 - y1), sy = y1 < y2 ? 1 : -1;
-    let err = dx + dy;
-    while (true) {
-        // Road width 2
-        for(let ox=0; ox<=1; ox++) for(let oy=0; oy<=1; oy++) {
-            const tx = x + ox;
-            const ty = y + oy;
-            if (ty >= 0 && ty < OW_HEIGHT && tx >= 0 && tx < OW_WIDTH) {
-                owGrid[ty][tx] = 0;
-                owVisual[ty][tx] = type;
-            }
-        }
-        if (x === x2 && y === y2) break;
-        const e2 = 2 * err;
-        if (e2 >= dy) { err += dy; x += sx; }
-        if (e2 <= dx) { err += dx; y += sy; }
     }
 };
 
-// Vertical Connections
-drawRoad(10, 5, 10, 55); // Col 1
-drawRoad(30, 5, 30, 55); // Col 2
-drawRoad(50, 5, 50, 55); // Col 3
-
-// Horizontal Connections
-drawRoad(10, 30, 50, 30); // Row B (Plaza Hub)
-drawRoad(10, 10, 30, 10); // A1 ↔ A2
-drawRoad(30, 50, 50, 50); // C2 ↔ C3
-
-// 3. BLOCK DECORATION
-// B2: Plaza Principal (Center Hub)
-for(let y=26; y<34; y++) for(let x=26; x<34; x++) { owVisual[y][x] = TILES.PATH; }
-owGrid[30][30] = 1; owVisual[30][30] = TILES.FOUNTAIN;
-owGrid[28][28] = 1; owVisual[28][28] = TILES.BENCH;
-owGrid[32][28] = 1; owVisual[32][28] = TILES.BENCH;
-owGrid[28][32] = 1; owVisual[28][32] = TILES.BENCH;
-owGrid[32][32] = 1; owVisual[32][32] = TILES.BENCH;
-// Farolas
-owGrid[27][27] = 1; owVisual[27][27] = TILES.LAMP_ON;
-owGrid[33][33] = 1; owVisual[33][33] = TILES.LAMP_ON;
-
-// A1: Park 1
-for(let i=0; i<15; i++) {
-    const rx = Math.floor(Math.random()*14)+3;
-    const ry = Math.floor(Math.random()*14)+3;
-    owVisual[ry][rx] = TILES.FLOWER;
+// Map Borders
+for(let i=0; i<60; i++) {
+    owGrid[0][i] = 1; owVisual[0][i] = TILES.TREE_PINE;
+    owGrid[59][i] = 1; owVisual[59][i] = TILES.TREE_PINE;
+    owGrid[i][0] = 1; owVisual[i][0] = TILES.TREE_PINE;
+    owGrid[i][59] = 1; owVisual[i][59] = TILES.TREE_PINE;
 }
 
-// A3: Soccer Field (Decorative)
-for(let y=5; y<15; y++) {
-    for(let x=43; x<57; x++) {
-        if(y===5 || y===14 || x===43 || x===57 || x===50) {
-            owVisual[y][x] = TILES.PATH_ALT; // Field lines
-        }
-    }
+// BLOQUE C1 (x 0-19, y 40-59)
+fillArea(owGrid, owVisual, 0, 40, 20, 20, TILES.GRASS, false);
+
+// 1) FÁBRICA EXTERIOR
+fillArea(owGrid, owVisual, 1, 37, 5, 15, TILES.METAL, true);
+owVisual[51][3] = TILES.DOOR;
+owGrid[51][3] = 0;
+
+// 2) CAMINOS
+drawPath(owVisual, 8, 42, 9, 57, TILES.PATH);
+drawPath(owVisual, 10, 42, 19, 42, TILES.PATH);
+drawPath(owVisual, 10, 57, 19, 57, TILES.PATH);
+
+// 4) ÁRBOL GIGANTE (x: 12-16, y: 43-47)
+fillArea(owGrid, owVisual, 12, 43, 5, 5, TILES.TREE, true);
+owVisual[47][14] = TILES.TREE_TRUNK;
+owGrid[47][14] = 1;
+
+// 5) DECORACIÓN EXTERIOR
+const setBench = (x, y) => { owVisual[y][x] = TILES.BENCH; owGrid[y][x] = 1; };
+setBench(12, 56); setBench(13, 56);
+setBench(15, 49); setBench(16, 49);
+
+// ---------------------------------------------------------
+// INTERIOR FÁBRICA "experience_interior" (30x30)
+// ---------------------------------------------------------
+const INT_W = 30;
+const INT_H = 30;
+const intGrid = createGrid(INT_W, INT_H, 1);
+const intVisual = createGrid(INT_W, INT_H, TILES.VOID);
+
+// Foundation Floor
+fillArea(intGrid, intVisual, 1, 1, 28, 28, TILES.METAL, false);
+
+// Perimeter Walls
+for(let i=0; i<30; i++) {
+    intVisual[0][i] = TILES.WALL; intGrid[0][i] = 1;
+    intVisual[29][i] = TILES.WALL; intGrid[29][i] = 1;
+    intVisual[i][0] = TILES.WALL; intGrid[i][0] = 1;
+    intVisual[i][29] = TILES.WALL; intGrid[i][29] = 1;
+    intVisual[1][i] = TILES.WALL;
 }
 
-// C1: Park 2 (Industrial Green)
-for(let y=42; y<48; y++) {
-    for(let x=12; x<18; x++) {
-        if(Math.random()>0.7) { owGrid[y][x]=1; owVisual[y][x]=TILES.BUSH; }
-    }
+// ZONES:
+// 1. Generador Alpha (8x6) - Top Left
+fillArea(intGrid, intVisual, 2, 3, 8, 6, TILES.MACHINE, true);
+// 2. Procesador Beta (6x8) - Top Right
+fillArea(intGrid, intVisual, 22, 3, 6, 8, TILES.MACHINE, true);
+// 3. Núcleo de Datos (10x6) - Center
+fillArea(intGrid, intVisual, 10, 12, 10, 6, TILES.MACHINE, true);
+
+// Pipes connecting zones
+for(let ix=10; ix<22; ix++) { intVisual[5][ix] = TILES.PIPE_H; }
+for(let iy=9; iy<12; iy++) { intVisual[iy][5] = TILES.PIPE_V; }
+for(let iy=11; iy<12; iy++) { intVisual[iy][25] = TILES.PIPE_V; }
+
+// Conveyor belts on the sides
+fillArea(intGrid, intVisual, 2, 10, 1, 15, TILES.CONVEYOR, true);
+fillArea(intGrid, intVisual, 27, 10, 1, 15, TILES.CONVEYOR, true);
+
+// Consoles around the Data Core
+fillArea(intGrid, intVisual, 11, 11, 8, 1, TILES.TECH, true);
+fillArea(intGrid, intVisual, 11, 18, 8, 1, TILES.TECH, true);
+
+// Add Control Panels (Interactive)
+intVisual[15][9] = TILES.CONTROL_PANEL; intGrid[15][9] = 1;
+intVisual[15][20] = TILES.CONTROL_PANEL; intGrid[15][20] = 1;
+
+// Safety pasillos (Stripes)
+for(let iy=2; iy<28; iy++) { intVisual[iy][15] = TILES.STRIPE; }
+for(let ix=2; ix<28; ix++) { intVisual[22][ix] = TILES.STRIPE; }
+
+// Decorations: Tools and Signs
+intVisual[5][2] = TILES.WARNING_SIGN;
+intVisual[10][20] = TILES.TOOLS;
+intVisual[25][5] = TILES.TOOLS;
+intVisual[25][25] = TILES.WARNING_SIGN;
+
+// Logistics Zone - Bottom Right
+fillArea(intGrid, intVisual, 21, 23, 7, 5, TILES.METAL, false);
+for(let k=0; k<5; k++) {
+    const rx = 22 + k;
+    const ry = 24 + (k % 2);
+    const t = k % 2 === 0 ? TILES.CRATE : TILES.BARREL;
+    intVisual[ry][rx] = t;
+    intGrid[ry][rx] = 1;
 }
 
-// 4. INTERIORS (Compact)
+// Exit Door at the bottom
+intVisual[29][15] = TILES.DOOR;
+intGrid[29][15] = 0;
+intVisual[28][15] = TILES.DOOR;
+intGrid[28][15] = 0;
+
 const createRoom = (w, h, floor) => {
     const grid = createGrid(w, h, 1);
     const visual = createGrid(w, h, TILES.VOID);
-    drawRect(grid, visual, 1, 1, w-2, h-2, TILES.WALL, floor);
-    grid[h-2][Math.floor(w/2)] = 2; 
-    visual[h-2][Math.floor(w/2)] = TILES.DOOR;
+    for(let iy=1; iy<h-1; iy++) {
+        for(let ix=1; ix<w-1; ix++) {
+            grid[iy][ix] = 0;
+            visual[iy][ix] = floor;
+            if (iy === 1) visual[iy][ix] = TILES.WALL;
+        }
+    }
+    grid[h-1][Math.floor(w/2)] = 0;
+    visual[h-1][Math.floor(w/2)] = TILES.DOOR;
     return { grid, visual };
 };
-const place = (room, x, y, tile, solid=false) => {
-    if(room.visual[y]) {
-        room.visual[y][x] = tile;
-        if(solid) room.grid[y][x] = 1;
-    }
-};
-
-const rAbout = createRoom(10, 10, TILES.FLOOR_WOOD);
-place(rAbout, 2, 2, TILES.BED, true); place(rAbout, 7, 3, TILES.SOFA, true);
-place(rAbout, 7, 6, TILES.LAMP_ON, true); place(rAbout, 2, 6, TILES.BOOKSHELF, true);
-
-const rSkills = createRoom(12, 10, TILES.FLOOR_STONE);
-place(rSkills, 2, 2, TILES.GYM_MAT); place(rSkills, 3, 2, TILES.GYM_MAT);
-place(rSkills, 9, 2, TILES.WEIGHTS, true); place(rSkills, 9, 5, TILES.PUNCHING_BAG, true);
-
-const rProjects = createRoom(12, 12, TILES.FLOOR_STONE);
-place(rProjects, 2, 2, TILES.TECH, true); place(rProjects, 9, 2, TILES.TECH, true);
-place(rProjects, 5, 5, TILES.TABLE, true); place(rProjects, 6, 5, TILES.MONITOR, true);
-
-const rExp1 = createRoom(12, 12, TILES.FLOOR_WOOD);
-place(rExp1, 2, 2, TILES.COUNTER, true); place(rExp1, 9, 2, TILES.STAIRS); place(rExp1, 2, 6, TILES.SOFA, true);
-const rExp2 = createRoom(10, 10, TILES.FLOOR_WOOD);
-rExp2.grid[8][5] = 1; rExp2.visual[8][5] = TILES.WALL; 
-place(rExp2, 7, 2, TILES.STAIRS); place(rExp2, 2, 2, TILES.BOOKSHELF, true);
-
-const rContact = createRoom(10, 8, TILES.FLOOR_STONE);
-place(rContact, 2, 2, TILES.COUNTER, true);
 
 export const MAPS = {
     'overworld': { id: 'overworld', grid: owGrid, visual: owVisual },
-    'about_interior': { id: 'about_interior', grid: rAbout.grid, visual: rAbout.visual },
-    'skills_interior': { id: 'skills_interior', grid: rSkills.grid, visual: rSkills.visual },
-    'projects_interior': { id: 'projects_interior', grid: rProjects.grid, visual: rProjects.visual },
-    'experience_interior': { id: 'experience_interior', grid: rExp1.grid, visual: rExp1.visual },
-    'experience_interior_f2': { id: 'experience_interior_f2', grid: rExp2.grid, visual: rExp2.visual },
-    'contact_interior': { id: 'contact_interior', grid: rContact.grid, visual: rContact.visual }
+    'about_interior': createRoom(10, 10, TILES.FLOOR_WOOD),
+    'skills_interior': createRoom(12, 10, TILES.FLOOR_STONE),
+    'contact_interior': createRoom(10, 8, TILES.FLOOR_STONE),
+    'experience_interior': { id: 'experience_interior', grid: intGrid, visual: intVisual }
 };

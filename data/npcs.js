@@ -1,6 +1,6 @@
+
 /**
  * NPC Data
- * Each NPC belongs to a specific mapId.
  */
 
 export const NPCS = [
@@ -9,126 +9,62 @@ export const NPCS = [
         id: 'guide',
         mapId: 'overworld',
         type: 'npc',
-        x: 30, y: 32, // Standing at the Plaza Fountain
-        spriteKey: 'npc',
-        dialogue: ["Welcome to the town center.", "The School is straight North.", "My friend in the West says the Factory is hiring."],
+        x: 30, y: 32, 
+        dialogue: ["Welcome to the town center.", "The School is straight North.", "The Industrial Park is in the South-West."],
         aiConfig: { mode: 'options' }
-    },
-    {
-        id: 'villager_1',
-        mapId: 'overworld',
-        type: 'npc',
-        x: 32, y: 48, // Near Spawn road
-        spriteKey: 'npc',
-        dialogue: ["New around here?", "The Plaza is just up ahead."],
-        aiConfig: { mode: 'options' }
-    },
-    {
-        id: 'athlete',
-        mapId: 'overworld',
-        type: 'npc',
-        x: 50, y: 16, // At Soccer Field (A3)
-        spriteKey: 'npc',
-        dialogue: ["Practice makes perfect!", "Check out the dev's skills in the school."],
-        aiConfig: { mode: 'generic' }
     },
 
-    // --- INTERIORS (Positions maintained) ---
+    // --- INTERIOR FÁBRICA (7 NPCs) ---
     {
-        id: 'me_avatar',
-        mapId: 'about_interior',
+        id: 'chief_engineer',
+        mapId: 'experience_interior',
         type: 'npc',
-        x: 5, y: 4, 
-        spriteKey: 'npc',
-        dialogue: ["Welcome to my humble home.", "Small spaces spark creativity."],
+        x: 15, y: 14, // MOVED: Now overseeing the central Data Core
+        dialogue: ["Identification verified. Welcome, Architect.", "We are currently compiling the latest experience logs.", "The system is stable at 98.7% efficiency."],
+        aiConfig: { mode: 'options' },
         panel: {
-            title: "About Me",
+            title: "Senior Fullstack Engineer - Career Archive",
             html: `
-                <div class="flex gap-6 items-start">
-                    <div class="w-32 h-32 bg-gray-700 rounded-full flex-shrink-0 flex items-center justify-center text-4xl">👨‍💻</div>
-                    <div>
-                        <h3 class="text-xl font-bold text-white mb-2">Creative Developer</h3>
-                        <p class="mb-4">Passionate about clean code and interactive experiences.</p>
-                        <ul class="list-disc pl-5 text-gray-400">
-                            <li>5+ Years JS Experience</li>
-                            <li>Full Stack Capable</li>
-                            <li>Game Dev Enthusiast</li>
-                        </ul>
+                <div class="space-y-8 relative border-l-2 border-yellow-500/30 ml-4 pl-8">
+                    <div class="relative">
+                        <span class="absolute -left-[41px] top-1 w-5 h-5 rounded-full bg-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.6)] border-4 border-black"></span>
+                        <h4 class="text-xl font-bold text-white tracking-tight">Lead Fullstack Architect</h4>
+                        <p class="text-sm text-yellow-400 font-mono">Future Systems | 2022 - Present</p>
+                        <p class="mt-2 text-gray-300 leading-relaxed">Developing core AI infrastructure and high-frequency data visualizations. Spearheaded the transition to modular micro-frontends.</p>
+                    </div>
+                    <div class="relative">
+                        <span class="absolute -left-[41px] top-1 w-5 h-5 rounded-full bg-blue-500 border-4 border-black"></span>
+                        <h4 class="text-xl font-bold text-white tracking-tight">Senior Web Engineer</h4>
+                        <p class="text-sm text-blue-400 font-mono">Global Creative Agency | 2019 - 2022</p>
+                        <p class="mt-2 text-gray-300 leading-relaxed">Delivered 50+ award-winning interactive sites. Optimized WebGL rendering pipelines for mobile browsers.</p>
+                    </div>
+                    <div class="relative">
+                        <span class="absolute -left-[41px] top-1 w-5 h-5 rounded-full bg-gray-600 border-4 border-black"></span>
+                        <h4 class="text-xl font-bold text-white tracking-tight">Frontend Specialist</h4>
+                        <p class="text-sm text-gray-500 font-mono">StartUp Hub | 2017 - 2019</p>
+                        <p class="mt-2 text-gray-300 leading-relaxed">Architected the initial MVP using React and Redux. Scaled the platform to 100k active users.</p>
                     </div>
                 </div>
             `
         }
     },
+    { id: 'bot_maintenance_1', mapId: 'experience_interior', x: 5, y: 11, dialogue: ["BEEP. Lubricating joints..."] },
+    { id: 'bot_maintenance_2', mapId: 'experience_interior', x: 25, y: 11, dialogue: ["Sector 4 clear of bugs. Literal bugs."] },
+    { id: 'worker_logistics', mapId: 'experience_interior', x: 10, y: 22, dialogue: ["Moving experience packets to the cloud."] },
+    { id: 'worker_qc', mapId: 'experience_interior', x: 20, y: 22, dialogue: ["The code quality here is exceptional today."] },
+    { id: 'drone_archiver', mapId: 'experience_interior', x: 27, y: 5, dialogue: ["*Whirrr* Backing up memories..."] },
+    { id: 'security_droid', mapId: 'experience_interior', x: 15, y: 27, dialogue: ["Stand clear of the exit portal."] },
+
+    // --- OTROS ---
     {
-        id: 'skill_trainer_front',
-        mapId: 'skills_interior',
+        id: 'me_avatar',
+        mapId: 'about_interior',
         type: 'npc',
-        x: 4, y: 4,
-        spriteKey: 'npc',
-        dialogue: ["Frontend requires precision."],
+        x: 5, y: 4, 
+        dialogue: ["Welcome to my workspace.", "Feel free to explore."],
         panel: {
-            title: "Frontend Skills",
-            html: `<div class="grid grid-cols-2 gap-2"><span class="bg-blue-900 p-2 rounded">React</span><span class="bg-yellow-900 p-2 rounded">JavaScript</span></div>`
-        }
-    },
-    {
-        id: 'skill_trainer_back',
-        mapId: 'skills_interior',
-        type: 'npc',
-        x: 8, y: 4,
-        spriteKey: 'npc',
-        dialogue: ["The backend is the backbone."],
-        panel: {
-            title: "Backend Skills",
-            html: `<div class="grid grid-cols-2 gap-2"><span class="bg-green-900 p-2 rounded">Node.js</span><span class="bg-gray-700 p-2 rounded">SQL</span></div>`
-        }
-    },
-    {
-        id: 'project_bot_1',
-        mapId: 'projects_interior',
-        type: 'npc',
-        x: 4, y: 5,
-        spriteKey: 'npc',
-        dialogue: ["Beep. Viewing ShopMaster 3000 data."],
-        panel: {
-            title: "ShopMaster 3000",
-            html: `<h3 class="text-xl mb-2">Full Stack Shop</h3><p>Next.js + Stripe Integration.</p>`
-        }
-    },
-    {
-        id: 'project_bot_2',
-        mapId: 'projects_interior',
-        type: 'npc',
-        x: 8, y: 5,
-        spriteKey: 'npc',
-        dialogue: ["Click. Accessing ChatGenius logs."],
-        panel: {
-            title: "ChatGenius",
-            html: `<h3 class="text-xl mb-2">WebSocket Chat</h3><p>Socket.io + Redis adapter.</p>`
-        }
-    },
-    {
-        id: 'hr_manager',
-        mapId: 'experience_interior_f2',
-        type: 'npc',
-        x: 5, y: 4,
-        spriteKey: 'npc',
-        dialogue: ["Archived employment records ready."],
-        panel: {
-            title: "Work History",
-            html: `<p>Senior Dev @ TechCorp (2021-Present)</p><p>Junior Dev @ WebAgency (2018-2021)</p>`
-        }
-    },
-    {
-        id: 'contact_bot',
-        mapId: 'contact_interior',
-        type: 'npc',
-        x: 5, y: 4,
-        spriteKey: 'npc',
-        dialogue: ["Ready to collaborate?"],
-        panel: {
-            title: "Contact Me",
-            html: `<div class="text-center"><p class="mb-4">email@example.com</p></div>`
+            title: "Developer Identity",
+            html: `<p>Creative Developer with a passion for logic and aesthetics.</p>`
         }
     }
 ];

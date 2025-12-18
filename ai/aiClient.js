@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { NPC_PROMPTS } from './npcPrompts.js';
 
@@ -7,9 +8,9 @@ import { NPC_PROMPTS } from './npcPrompts.js';
  */
 class AIClient {
     constructor() {
-        // Initialize with API Key from environment
+        // The API key is obtained from process.env.API_KEY
         this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        this.modelName = "gemini-2.5-flash"; // Using Flash for speed/latency in games
+        this.modelName = "gemini-3-flash-preview"; 
         this.currentChat = null;
     }
 
@@ -18,10 +19,8 @@ class AIClient {
      * @param {string} npcId - The ID of the NPC from data/npcs.js
      */
     async startSession(npcId) {
-        // Determine which persona to use
         let config = NPC_PROMPTS[npcId];
         
-        // Fallback mapping if exact ID isn't in prompts, or use generic
         if (!config) {
             if (npcId.includes('guide')) config = NPC_PROMPTS.guide;
             else if (npcId.includes('hr')) config = NPC_PROMPTS.hr_manager;
@@ -36,8 +35,8 @@ class AIClient {
                 model: this.modelName,
                 config: {
                     systemInstruction: config.systemInstruction,
-                    maxOutputTokens: 100, // Enforce brevity for RPG dialog boxes
-                    temperature: 0.7,
+                    maxOutputTokens: 150,
+                    temperature: 0.8,
                 }
             });
             return config;
@@ -52,14 +51,15 @@ class AIClient {
      * @param {string} message - User input or selected option
      */
     async sendMessage(message) {
-        if (!this.currentChat) return "Error: No active conversation.";
+        if (!this.currentChat) return "Connection lost... (No active chat)";
 
         try {
-            const result = await this.currentChat.sendMessage({ message });
-            return result.text;
+            const response = await this.currentChat.sendMessage({ message });
+            // Accessing .text property as per @google/genai standards
+            return response.text;
         } catch (error) {
             console.error("AI Response Error:", error);
-            return "The connection to the server is static... (AI Error)";
+            return "Bzzzt... signal interrupted. Try again traveler.";
         }
     }
 }

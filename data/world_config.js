@@ -1,14 +1,14 @@
+
 /**
  * World Configuration
- * Defines the placement and properties of structures (Houses) and interactables (Signs).
  */
 
 import { ASSETS } from './assets.js';
 
 export const HOUSES = [
-    // --- MAIN BUILDINGS (BY BLOCK) ---
+    // --- EDIFICIOS PRINCIPALES ---
     
-    // A2: School (Skills)
+    // Escuela (Habilidades)
     {
         id: 'house_skills',
         type: 'gym',
@@ -17,9 +17,9 @@ export const HOUSES = [
         image: ASSETS.house_skills,
         doorOffset: { x: 144, y: 230 },
         targetMap: 'skills_interior',
-        spawn: { x: 6, y: 7 }
+        spawn: { x: 6, y: 8 }
     },
-    // B3: Own House (About)
+    // Casa Propia (Sobre mí)
     {
         id: 'house_about',
         type: 'cottage',
@@ -28,30 +28,20 @@ export const HOUSES = [
         image: ASSETS.house_about,
         doorOffset: { x: 120, y: 230 }, 
         targetMap: 'about_interior',
-        spawn: { x: 5, y: 7 } 
+        spawn: { x: 5, y: 8 } 
     },
-    // C1: Factory (Experience + Projects Lab)
+    // Fábrica (Experiencia) - Posición FINAL y: 37
     {
         id: 'house_experience',
         type: 'office',
-        x: 4, y: 44, 
-        width: 5, height: 6,
+        x: 1, y: 37, 
+        width: 5, height: 15,
         image: ASSETS.house_experience,
-        doorOffset: { x: 120, y: 278 },
-        targetMap: 'experience_interior',
-        spawn: { x: 6, y: 9 }
+        doorOffset: { x: 96, y: 672 }, // Offset calculado para puerta en (3, 51)
+        targetMap: 'experience_interior', 
+        spawn: { x: 15, y: 27 } 
     },
-    {
-        id: 'house_projects',
-        type: 'lab',
-        x: 10, y: 46, 
-        width: 6, height: 4, 
-        image: ASSETS.house_projects,
-        doorOffset: { x: 144, y: 190 },
-        targetMap: 'projects_interior',
-        spawn: { x: 6, y: 9 }
-    },
-    // Near Plaza Hub: Post Office (Contact)
+    // Hub: Oficina de Correos (Contacto)
     {
         id: 'house_contact',
         type: 'post',
@@ -60,35 +50,22 @@ export const HOUSES = [
         image: ASSETS.house_contact,
         doorOffset: { x: 96, y: 180 },
         targetMap: 'contact_interior',
-        spawn: { x: 5, y: 5 }
+        spawn: { x: 5, y: 6 }
     },
 
-    // --- FILLER HOUSES (Density Zones) ---
-    // B1: Residential Block
+    // --- RELLENO ---
     { x: 4, y: 22, width: 3, height: 3, image: ASSETS.house_filler, type: 'filler' },
     { x: 8, y: 22, width: 3, height: 3, image: ASSETS.house_filler, type: 'filler' },
-    { x: 12, y: 22, width: 3, height: 3, image: ASSETS.house_filler, type: 'filler' },
-    { x: 4, y: 34, width: 3, height: 3, image: ASSETS.house_filler, type: 'filler' },
-    { x: 8, y: 34, width: 3, height: 3, image: ASSETS.house_filler, type: 'filler' },
-
-    // C3: Residential Block
-    { x: 44, y: 42, width: 3, height: 3, image: ASSETS.house_filler, type: 'filler' },
-    { x: 52, y: 42, width: 3, height: 3, image: ASSETS.house_filler, type: 'filler' },
-    { x: 44, y: 52, width: 3, height: 3, image: ASSETS.house_filler, type: 'filler' },
-    { x: 52, y: 52, width: 3, height: 3, image: ASSETS.house_filler, type: 'filler' }
+    { x: 12, y: 22, width: 3, height: 3, image: ASSETS.house_filler, type: 'filler' }
 ];
 
 export const SIGNS = [
     {
-        x: 31, y: 28, // Near Plaza Hub
-        text: ["Plaza Major", "N: School | S: Entrance", "W: Residential | E: My House"]
+        x: 31, y: 28, 
+        text: ["Plaza Major", "North: School | South: Entrance", "West: Residential | East: My House"]
     },
     {
-        x: 12, y: 52, // Factory entrance
-        text: ["Industrial District", "Experience & Project Labs"]
-    },
-    {
-        x: 32, y: 54, // Spawn / Main Road
-        text: ["Welcome to the Portfolio Village", "Follow the road North to the Plaza"]
+        x: 10, y: 54, 
+        text: ["Industrial Sector C1", "Experience Factory and Lifetree"]
     }
 ];

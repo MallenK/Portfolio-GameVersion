@@ -1,3 +1,4 @@
+
 import { Sprite, Boundary, Player, Interactable, Structure } from './classes.js';
 import { MAPS, TILES, SOLID_TILES } from './data/maps.js';
 import { NPCS } from './data/npcs.js';
@@ -7,7 +8,7 @@ import { UI } from './ui/panels.js';
 import { AIDialogManager } from './ui/aiInterface.js';
 
 // --- Configuration ---
-const canvas = document.querySelector('canvas');
+const canvas = document.getElementById('gameCanvas');
 const c = canvas.getContext('2d');
 const transitionOverlay = document.getElementById('transitionOverlay');
 const startScreen = document.getElementById('startScreen');
@@ -22,94 +23,191 @@ const TILE_SIZE = 48;
 const createTileset = () => {
     const cvs = document.createElement('canvas');
     cvs.width = 2400; 
-    cvs.height = 48;
+    cvs.height = 480; 
     const ctx = cvs.getContext('2d');
 
-    const fillTexture = (x, color, type = 'solid') => {
+    const fillTexture = (idx, color, type = 'solid') => {
+        const tx = idx * 48;
+        const ty = 0;
         ctx.fillStyle = color;
-        ctx.fillRect(x * 48, 0, 48, 48);
-        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        ctx.fillRect(tx, ty, 48, 48);
+        
+        ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+        ctx.strokeRect(tx, ty, 48, 48);
+
         if (type === 'grass') {
-            for(let i=0; i<10; i++) ctx.fillRect(x*48 + Math.random()*40, Math.random()*40, 2, 6);
-        } else if (type === 'cobble') {
-            for(let i=0; i<48; i+=12) {
-                ctx.beginPath(); ctx.arc(x*48 + i + 6, 12, 5, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(x*48 + i + 6, 36, 5, 0, Math.PI*2); ctx.fill();
-            }
-        } else if (type === 'brick') {
-            for(let i=0; i<48; i+=12) {
-                ctx.fillRect(x*48, i, 48, 1);
-                ctx.fillRect(x*48 + 12, i, 1, 12);
-            }
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            for(let i=0; i<8; i++) ctx.fillRect(tx + Math.random()*40, ty + Math.random()*40, 2, 4);
+        } else if (type === 'path') {
+            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+            for(let i=0; i<20; i++) ctx.fillRect(tx + Math.random()*44, ty + Math.random()*44, 4, 4);
+        } else if (type === 'water') {
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            ctx.fillRect(tx + 5, ty + 10, 30, 2);
+            ctx.fillRect(tx + 15, ty + 25, 20, 2);
+        } else if (type === 'flower') {
+            ctx.fillStyle = '#f87171';
+            ctx.beginPath(); ctx.arc(tx+24, ty+24, 4, 0, Math.PI*2); ctx.fill();
+        } else if (type === 'tree') {
+            // SOLID COLOR TREE
+            ctx.fillStyle = color;
+            ctx.beginPath(); ctx.arc(tx+24, ty+24, 20, 0, Math.PI*2); ctx.fill();
+        } else if (type === 'trunk') {
+            ctx.fillStyle = '#451a03';
+            ctx.fillRect(tx+16, ty, 16, 48);
+        } else if (type === 'bench') {
+            ctx.fillStyle = '#78350f'; 
+            ctx.fillRect(tx+4, ty+14, 40, 8); 
+            ctx.fillRect(tx+4, ty+28, 40, 10); 
+            ctx.fillStyle = '#451a03'; 
+            ctx.fillRect(tx+6, ty+22, 4, 18); 
+            ctx.fillRect(tx+38, ty+22, 4, 18); 
+        } else if (type === 'barrel') {
+            ctx.fillStyle = '#451a03';
+            ctx.beginPath(); ctx.ellipse(tx+24, ty+24, 14, 18, 0, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = '#271701'; ctx.lineWidth = 2; ctx.stroke();
+        } else if (type === 'crate') {
+            ctx.fillStyle = '#92400e';
+            ctx.fillRect(tx+6, ty+6, 36, 36);
+            ctx.strokeStyle = '#451a03'; ctx.lineWidth = 2;
+            ctx.strokeRect(tx+6, ty+6, 36, 36);
+            ctx.beginPath(); ctx.moveTo(tx+6, ty+6); ctx.lineTo(tx+42, ty+42); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(tx+42, ty+6); ctx.lineTo(tx+6, ty+42); ctx.stroke();
+        } else if (type === 'stripe') {
+            ctx.fillStyle = '#fbbf24'; // Yellow
+            ctx.fillRect(tx, ty, 48, 48);
+            ctx.fillStyle = '#000'; // Black stripes
+            ctx.beginPath();
+            ctx.moveTo(tx, ty); ctx.lineTo(tx+15, ty); ctx.lineTo(tx, ty+15); ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(tx+20, ty); ctx.lineTo(tx+40, ty); ctx.lineTo(tx, ty+40); ctx.lineTo(tx, ty+20); ctx.fill();
+        } else if (type === 'pipe_v') {
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(tx+20, ty, 8, 48);
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(tx+20, ty+10, 8, 2);
+            ctx.fillRect(tx+20, ty+38, 8, 2);
+        } else if (type === 'pipe_h') {
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(tx, ty+20, 48, 8);
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(tx+10, ty+20, 2, 8);
+            ctx.fillRect(tx+38, ty+20, 2, 8);
+        } else if (type === 'warning') {
+            ctx.fillStyle = '#fbbf24';
+            ctx.beginPath(); ctx.moveTo(tx+24, ty+10); ctx.lineTo(tx+40, ty+38); ctx.lineTo(tx+8, ty+38); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = '#000'; ctx.fillRect(tx+23, ty+20, 2, 10); ctx.fillRect(tx+23, ty+32, 2, 2);
+        } else if (type === 'tools') {
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(tx+10, ty+20, 28, 6); // Wrench-like
+            ctx.fillRect(tx+10, ty+16, 6, 14);
+            ctx.fillRect(tx+32, ty+16, 6, 14);
+        } else if (type === 'control') {
+            ctx.fillStyle = '#334155'; ctx.fillRect(tx+4, ty+4, 40, 40);
+            ctx.fillStyle = '#0f172a'; ctx.fillRect(tx+8, ty+8, 32, 24); // Screen
+            ctx.fillStyle = '#10b981'; ctx.fillRect(tx+10, ty+34, 6, 6); // Button
+            ctx.fillStyle = '#ef4444'; ctx.fillRect(tx+20, ty+34, 6, 6); // Button
         }
     };
 
-    fillTexture(0, '#65a30d', 'grass'); 
-    fillTexture(1, '#9f1239', 'brick'); 
-    fillTexture(2, '#171717');
-    fillTexture(3, '#65a30d', 'grass');
-    ctx.fillStyle = '#dc2626'; ctx.beginPath(); ctx.arc(144+24, 24, 5, 0, Math.PI*2); ctx.fill();
-    fillTexture(4, '#d4a373'); 
-    fillTexture(5, '#d6d3d1');
-    fillTexture(6, '#0c0a09');
-    fillTexture(7, '#9f1239'); 
-    ctx.fillStyle = '#78350f'; ctx.fillRect(388,10,40,28);
-    ctx.fillStyle = '#451a03'; ctx.fillRect(436, 4, 40, 44);
-    ctx.fillStyle = '#334155'; ctx.fillRect(480,0,48,48);
-    ctx.fillStyle = '#854d0e'; ctx.beginPath(); ctx.arc(528+24, 38, 8, 0, Math.PI*2); ctx.fill(); 
-    fillTexture(12, '#3f6212', 'grass'); 
-    fillTexture(13, '#d6cba8', 'cobble'); 
-    fillTexture(14, '#38bdf8');
-    fillTexture(15, '#65a30d', 'grass'); 
-    ctx.fillStyle = '#171717'; ctx.fillRect(720+5, 10, 4, 30);
-    fillTexture(16, '#3b82f6');
-    ctx.fillStyle = '#525252'; ctx.fillRect(816+4, 12, 40, 24);
-    ctx.fillStyle = '#b45309'; ctx.fillRect(864, 12, 48, 24);
-    ctx.fillStyle = '#1d4ed8'; ctx.fillRect(912+4, 8, 40, 36); 
-    ctx.fillStyle = '#451a03'; ctx.fillRect(960+4, 0, 40, 48);
-    ctx.fillStyle = '#334155'; ctx.fillRect(1008+4, 12, 40, 24);
-    fillTexture(22, '#166534', 'grass');
-    fillTexture(23, '#78716c');
-    fillTexture(24, '#d6cba8');
-    ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(1152+24, 24, 16, 0, Math.PI*2); ctx.fill();
-    fillTexture(25, '#3f6212', 'grass');
-    fillTexture(26, '#d6cba8', 'cobble'); 
-    ctx.fillStyle = '#171717'; ctx.fillRect(1248+22, 10, 4, 38); 
-    ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(1248+24, 10, 5, 0, Math.PI*2); ctx.fill();
-    fillTexture(27, '#65a30d', 'grass'); 
-    ctx.fillStyle = '#451a03'; ctx.fillRect(1296+8, 20, 32, 10);
-    fillTexture(28, '#78350f');
-    fillTexture(29, '#92400e');
-    fillTexture(30, '#b91c1c', 'brick');
-    fillTexture(31, '#38bdf8');
-    fillTexture(32, '#ef4444'); 
+    fillTexture(TILES.GRASS, '#3f6212', 'grass');
+    fillTexture(TILES.WALL, '#1e293b');
+    fillTexture(TILES.DOOR, '#000000');
+    fillTexture(TILES.FLOWER, '#3f6212', 'flower');
+    fillTexture(TILES.FLOOR_WOOD, '#451a03', 'path');
+    fillTexture(TILES.FLOOR_STONE, '#334155', 'path');
+    fillTexture(TILES.PATH, '#713f12', 'path');
+    fillTexture(TILES.WATER, '#0c4a6e', 'water');
+    fillTexture(TILES.TREE_PINE, '#064e3b', 'tree');
+    fillTexture(TILES.METAL, '#27272a', 'path');
+    fillTexture(TILES.PATH_ALT, '#57534e', 'path');
+    fillTexture(TILES.LILYPAD, '#0c4a6e', 'water');
+    fillTexture(TILES.MACHINE, '#475569');
+    fillTexture(TILES.CONVEYOR, '#1e293b');
+    fillTexture(TILES.STRIPE, '#fbbf24', 'stripe');
+    fillTexture(TILES.TECH, '#1e293b', 'path');
+    fillTexture(TILES.PIPE_V, '#64748b', 'pipe_v');
+    fillTexture(TILES.PIPE_H, '#64748b', 'pipe_h');
+    fillTexture(TILES.WARNING_SIGN, '#fbbf24', 'warning');
+    fillTexture(TILES.TOOLS, '#94a3b8', 'tools');
+    fillTexture(TILES.CONTROL_PANEL, '#334155', 'control');
+    
+    fillTexture(TILES.TREE, '#065f46', 'tree');     
+    fillTexture(TILES.TREE_TRUNK, '#451a03', 'trunk');
+    fillTexture(TILES.BENCH, '#78350f', 'bench');   
+    fillTexture(TILES.BARREL, '#451a03', 'barrel'); 
+    fillTexture(TILES.CRATE, '#92400e', 'crate');   
 
     const img = new Image();
     img.src = cvs.toDataURL();
     return img;
 };
 
-const createCharSprite = (color) => {
+const createCharSprite = (bodyColor, eyeColor = '#000') => {
     const cvs = document.createElement('canvas');
-    cvs.width = 192; cvs.height = 48;
+    cvs.width = 192; cvs.height = 192; 
     const ctx = cvs.getContext('2d');
-    for(let i=0; i<4; i++) {
-        const x = i * 48;
-        ctx.fillStyle = 'rgba(0,0,0,0.2)';
-        ctx.beginPath(); ctx.ellipse(x+24, 44, 10, 3, 0, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#111'; ctx.fillRect(x+16, 40, 6, 8); ctx.fillRect(x+26, 40, 6, 8);
-        ctx.fillStyle = color; ctx.fillRect(x+14, 18, 20, 22);
-        ctx.fillStyle = '#ffedd5'; ctx.fillRect(x+14, 6, 20, 14); 
-        ctx.fillStyle = '#000'; ctx.fillRect(x+18, 10, 4, 4); ctx.fillRect(x+26, 10, 4, 4);
-    }
+    
+    const directions = ['down', 'up', 'left', 'right'];
+    directions.forEach((dir, rowIdx) => {
+        const yBase = rowIdx * 48;
+        for(let i = 0; i < 4; i++) {
+            const x = i * 48;
+            const y = yBase;
+
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.beginPath(); ctx.ellipse(x+24, y+44, 12, 4, 0, 0, Math.PI*2); ctx.fill();
+            
+            // Legs
+            ctx.fillStyle = '#111';
+            let ly = y + 36;
+            if (i === 1 || i === 3) ly -= 3; // Bobbing effect for walking
+            
+            if (dir === 'down' || dir === 'up') {
+                ctx.fillRect(x+16, ly, 6, 8); ctx.fillRect(x+26, ly, 6, 8);
+            } else {
+                ctx.fillRect(x+20, ly, 8, 8);
+            }
+
+            // Body
+            ctx.fillStyle = bodyColor;
+            ctx.fillRect(x+14, y+18, 20, 20);
+            
+            // Head
+            ctx.fillStyle = '#ffedd5'; 
+            ctx.fillRect(x+14, y+6, 20, 16); 
+            
+            // Features based on direction
+            ctx.fillStyle = eyeColor;
+            if (dir === 'down') {
+                ctx.fillRect(x+18, y+12, 3, 3); ctx.fillRect(x+27, y+12, 3, 3);
+            } else if (dir === 'up') {
+                ctx.fillStyle = bodyColor;
+                ctx.fillRect(x+14, y+6, 20, 5); // Hair/Back of head
+            } else if (dir === 'left') {
+                ctx.fillRect(x+16, y+12, 3, 3);
+            } else if (dir === 'right') {
+                ctx.fillRect(x+29, y+12, 3, 3);
+            }
+            
+            // Simple mouth
+            if (dir === 'down') {
+                ctx.fillStyle = '#f87171';
+                ctx.fillRect(x+22, y+18, 4, 2);
+            }
+        }
+    });
+
     const img = new Image();
     img.src = cvs.toDataURL();
     return img;
 };
 
 const tilesetImage = createTileset();
-const playerSprite = createCharSprite('#ef4444');
-const npcSprite = createCharSprite('#0ea5e9'); 
+const playerSprite = createCharSprite('#ef4444'); 
+const npcSprite = createCharSprite('#3b82f6'); 
+const engineerSprite = createCharSprite('#f59e0b', '#fff'); 
 
 const offset = { x: 0, y: 0 };
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
@@ -126,13 +224,7 @@ let dialogController = null;
 let returnPosition = { x: 30, y: 32 };
 
 const aiDialogManager = new AIDialogManager(() => {
-    const target = currentInteractables.find(i => i.isPlayerInRange);
-    if (target && target.panelData) {
-        gameState = 'PANEL';
-        UI.showPanel(target.panelData);
-    } else {
-        gameState = 'WORLD';
-    }
+    gameState = 'WORLD';
 });
 
 const PLAYER_SCREEN_X = canvas.width/2 - 24;
@@ -141,8 +233,7 @@ const PLAYER_SCREEN_Y = canvas.height/2 - 24;
 const player = new Player({
     position: { x: PLAYER_SCREEN_X, y: PLAYER_SCREEN_Y }, 
     image: playerSprite,
-    frames: { max: 4 },
-    sprites: { up: playerSprite, down: playerSprite, left: playerSprite, right: playerSprite }
+    frames: { max: 4 }
 });
 
 function loadMap(mapId, startX, startY) {
@@ -153,14 +244,14 @@ function loadMap(mapId, startX, startY) {
     currentVisualLayer = mapConfig.visual;
     const targetPx = startX * TILE_SIZE;
     const targetPy = startY * TILE_SIZE;
+    
     offset.x = (canvas.width / 2) - targetPx - (TILE_SIZE / 2);
     offset.y = (canvas.height / 2) - targetPy - (TILE_SIZE / 2);
 
     currentBoundaries = [];
     mapConfig.grid.forEach((row, i) => {
         row.forEach((symbol, j) => {
-            const visualSymbol = mapConfig.visual[i][j];
-            if (SOLID_TILES.includes(symbol) || SOLID_TILES.includes(visualSymbol)) { 
+            if (symbol === 1) { 
                 currentBoundaries.push(new Boundary({ position: { x: j * TILE_SIZE, y: i * TILE_SIZE } }));
             }
         });
@@ -175,15 +266,10 @@ function loadMap(mapId, startX, startY) {
                 position: { x: h.x * TILE_SIZE, y: h.y * TILE_SIZE },
                 image: h.image,
                 collisionWidth: h.width * TILE_SIZE,
-                collisionHeight: TILE_SIZE,
-                offsetY: (h.height - 1) * TILE_SIZE
+                collisionHeight: TILE_SIZE * 2,
+                offsetY: (h.height - 2) * TILE_SIZE
             });
             currentStructures.push(house);
-            currentBoundaries.push(new Boundary({
-                position: { x: h.x * TILE_SIZE, y: h.y * TILE_SIZE + (h.height-1)*TILE_SIZE }
-            }));
-            const b = currentBoundaries[currentBoundaries.length-1];
-            b.width = h.width * TILE_SIZE; b.height = TILE_SIZE;
         });
 
         SIGNS.forEach(s => {
@@ -193,15 +279,31 @@ function loadMap(mapId, startX, startY) {
                 triggerType: 'sign',
                 dialogue: s.text
             }));
-            currentBoundaries.push(new Boundary({ position: { x: s.x * TILE_SIZE, y: s.y * TILE_SIZE } }));
         });
+    }
+
+    if (mapId === 'experience_interior') {
+        // Add static control panels
+        currentInteractables.push(new Interactable({
+            position: { x: 9 * TILE_SIZE, y: 15 * TILE_SIZE },
+            image: null, // Drawn by tileset
+            triggerType: 'sign',
+            dialogue: ["SYSTEM STATUS: OPTIMAL", "Thermal output within standard parameters."]
+        }));
+        currentInteractables.push(new Interactable({
+            position: { x: 20 * TILE_SIZE, y: 15 * TILE_SIZE },
+            image: null,
+            triggerType: 'sign',
+            dialogue: ["LOAD BALANCER: ACTIVE", "Redistributing data packets to Procesador Beta."]
+        }));
     }
 
     const mapNpcs = NPCS.filter(n => n.mapId === mapId);
     mapNpcs.forEach(n => {
+        const sprite = n.id === 'chief_engineer' ? engineerSprite : npcSprite;
         const npc = new Interactable({
             position: { x: n.x * TILE_SIZE, y: n.y * TILE_SIZE },
-            image: npcSprite,
+            image: sprite,
             frames: { max: 4 },
             dialogue: n.dialogue,
             panelData: n.panel,
@@ -232,7 +334,7 @@ function switchScene(targetMapId, x, y) {
             transitionOverlay.classList.remove('opacity-100');
             transitionOverlay.classList.add('opacity-0');
             isTransitioning = false;
-        }, 100);
+        }, 300);
     }, 500);
 }
 
@@ -253,12 +355,11 @@ function handleInteraction() {
         const target = currentInteractables.find(i => i.isPlayerInRange);
         if (target) {
             player.moving = false; 
-            if (target.aiConfig && activeMapId === 'overworld') {
+            if (target.aiConfig) {
                 gameState = 'AI_DIALOG'; UI.toggleInteractionPrompt(false); aiDialogManager.start(target);
             } else {
                 gameState = 'DIALOG'; dialogController = UI.showDialog(target.dialogue); UI.toggleInteractionPrompt(false);
             }
-            return;
         }
     }
 }
@@ -266,24 +367,47 @@ function handleInteraction() {
 function render() {
     c.fillStyle = '#050505';
     c.fillRect(0, 0, canvas.width, canvas.height);
-    const cols = 40; 
-    const time = performance.now();
+    
+    const time = Date.now() / 400;
+
     currentVisualLayer.forEach((row, i) => {
         row.forEach((idx, j) => {
             const x = j * TILE_SIZE + offset.x;
-            const y = i * TILE_SIZE + offset.y;
+            let y = i * TILE_SIZE + offset.y;
+            
+            // Render basic tiles
             if (x > -TILE_SIZE && x < canvas.width && y > -TILE_SIZE && y < canvas.height) {
-                c.drawImage(tilesetImage, (idx % cols) * TILE_SIZE, Math.floor(idx / cols) * TILE_SIZE, TILE_SIZE, TILE_SIZE, x, y, TILE_SIZE, TILE_SIZE);
-                const drawDecor = (img) => { c.drawImage(img, x, y); };
-                if (idx === TILES.SOFA) drawDecor(ASSETS.sofa);
-                if (idx === TILES.CHAIR) drawDecor(ASSETS.chair);
-                if (idx === TILES.WEIGHTS) drawDecor(ASSETS.weights);
-                if (idx === TILES.PUNCHING_BAG) drawDecor(ASSETS.punching_bag);
-                if (idx === TILES.BOOKS) drawDecor(ASSETS.books);
-                if (idx === TILES.STAIRS) drawDecor(ASSETS.stairs);
-                if (idx === TILES.WATER || idx === TILES.FOUNTAIN) {
-                    c.fillStyle = `rgba(255,255,255,${Math.sin(time / 800) * 0.1})`;
-                    c.fillRect(x,y,TILE_SIZE,TILE_SIZE);
+                // Flower bobbing
+                let finalY = y;
+                if (idx === TILES.FLOWER) {
+                    finalY += Math.sin(time + (i + j)) * 3;
+                }
+                c.drawImage(tilesetImage, idx * TILE_SIZE, 0, TILE_SIZE, TILE_SIZE, x, finalY, TILE_SIZE, TILE_SIZE);
+
+                // Animated machine overlay (blinking lights)
+                if (idx === TILES.MACHINE) {
+                    const blink = (Math.sin(time * 2 + (i * j)) + 1) / 2;
+                    if (blink > 0.8) {
+                        c.fillStyle = '#ef4444';
+                        c.fillRect(x + 10, y + 10, 4, 4);
+                    }
+                    if (blink < 0.2) {
+                        c.fillStyle = '#10b981';
+                        c.fillRect(x + 34, y + 10, 4, 4);
+                    }
+                    // Steam effect
+                    const steamOffset = (Date.now() / 20) % 60;
+                    c.fillStyle = `rgba(255, 255, 255, ${0.2 * (1 - steamOffset/60)})`;
+                    c.beginPath();
+                    c.arc(x + 24, y - steamOffset, 8 - (steamOffset/10), 0, Math.PI * 2);
+                    c.fill();
+                }
+
+                // Control panel blinking
+                if (idx === TILES.CONTROL_PANEL) {
+                    const screenBlink = (Math.sin(time * 5) + 1) / 2;
+                    c.fillStyle = `rgba(59, 130, 246, ${0.3 * screenBlink})`;
+                    c.fillRect(x + 8, y + 8, 32, 24);
                 }
             }
         });
@@ -299,10 +423,18 @@ function render() {
         if(item.type === 'structure') {
             c.drawImage(item.obj.image, item.obj.position.x + offset.x, item.obj.position.y + offset.y);
         } else if (item.type === 'interactable') {
-             const worldX = item.obj.position.x; const worldY = item.obj.position.y;
-             item.obj.position.x += offset.x; item.obj.position.y += offset.y;
-             item.obj.draw(c);
-             item.obj.position.x = worldX; item.obj.position.y = worldY;
+             if (item.obj.image) {
+                const worldX = item.obj.position.x; const worldY = item.obj.position.y;
+                item.obj.position.x += offset.x; item.obj.position.y += offset.y;
+                item.obj.draw(c);
+                item.obj.position.x = worldX; item.obj.position.y = worldY;
+             } else {
+                // Invisible interactables (like control panels drawn on floor) still need to check distance
+                const worldX = item.obj.position.x; const worldY = item.obj.position.y;
+                item.obj.position.x += offset.x; item.obj.position.y += offset.y;
+                item.obj.draw(c); // This draws the interaction bubble
+                item.obj.position.x = worldX; item.obj.position.y = worldY;
+             }
         } else if (item.type === 'player') { player.draw(c); }
     });
 
@@ -315,46 +447,63 @@ function render() {
             if (Math.hypot(cx - nx, cy - ny) < 60) { i.isPlayerInRange = true; found = true; }
         });
         UI.toggleInteractionPrompt(found);
-    } else { UI.toggleInteractionPrompt(false); }
+    }
 }
 
 function update() {
     if (!gameStarted || isTransitioning || gameState !== 'WORLD') return;
-    let moving = true;
     player.moving = false;
-    if (!keys.ArrowUp && !keys.ArrowDown && !keys.ArrowLeft && !keys.ArrowRight) moving = false;
-    if (moving) {
-        let dx = 0, dy = 0; const SPEED = 4;
-        if (keys.ArrowUp) dy = SPEED; else if (keys.ArrowDown) dy = -SPEED;
-        else if (keys.ArrowLeft) dx = SPEED; else if (keys.ArrowRight) dx = -SPEED;
-        const nextX = (PLAYER_SCREEN_X + 24) - offset.x - dx;
-        const nextY = (PLAYER_SCREEN_Y + 48) - offset.y - dy;
-        const pRect = { position: { x: nextX - 8, y: nextY - 8 }, width: 16, height: 16 };
+    
+    const SPEED = 5;
+    let moveX = 0, moveY = 0;
+    if (keys.ArrowUp) { moveY = SPEED; player.direction = 1; }
+    else if (keys.ArrowDown) { moveY = -SPEED; player.direction = 0; }
+    else if (keys.ArrowLeft) { moveX = SPEED; player.direction = 2; }
+    else if (keys.ArrowRight) { moveX = -SPEED; player.direction = 3; }
+
+    if (moveX !== 0 || moveY !== 0) {
+        const nextX = (PLAYER_SCREEN_X + 24) - (offset.x + moveX);
+        const nextY = (PLAYER_SCREEN_Y + 40) - (offset.y + moveY);
+        const pRect = { position: { x: nextX - 12, y: nextY - 12 }, width: 24, height: 24 };
+        
         let collide = false;
         for (const b of currentBoundaries) {
              if (rectCollision({ r1: pRect, r2: { position: b.position, width: b.width, height: b.height } })) { collide = true; break; }
         }
+        
         if (!collide) {
-            offset.x += dx; offset.y += dy; player.moving = true;
-            const checkX = Math.floor(nextX / TILE_SIZE); const checkY = Math.floor(nextY / TILE_SIZE);
+            offset.x += moveX; offset.y += moveY; player.moving = true;
+            
+            const checkX = Math.floor(nextX / TILE_SIZE);
+            const checkY = Math.floor(nextY / TILE_SIZE);
+            
             if (activeMapId === 'overworld') {
                 for(const h of HOUSES) {
-                    if (h.type === 'filler') continue;
-                    const doorX = (h.x * TILE_SIZE) + h.doorOffset.x; const doorY = (h.y * TILE_SIZE) + h.doorOffset.y;
-                    if (Math.hypot(nextX - doorX, nextY - doorY) < 60 && keys.ArrowUp) { 
+                    if (!h.targetMap) continue;
+                    const doorX = (h.x * TILE_SIZE) + h.doorOffset.x;
+                    const doorY = (h.y * TILE_SIZE) + h.doorOffset.y;
+                    if (Math.hypot(nextX - doorX, nextY - doorY) < 40 && keys.ArrowUp) {
                         returnPosition = { x: h.x + Math.floor(h.doorOffset.x / TILE_SIZE), y: h.y + Math.floor(h.doorOffset.y / TILE_SIZE) + 1 };
                         switchScene(h.targetMap, h.spawn.x, h.spawn.y); return;
                     }
                 }
             } else {
-                 if (MAPS[activeMapId].grid[checkY]?.[checkX] === TILES.DOOR) { switchScene('overworld', returnPosition.x, returnPosition.y); return; }
+                if (currentVisualLayer[checkY]?.[checkX] === TILES.DOOR) {
+                    switchScene('overworld', returnPosition.x, returnPosition.y);
+                }
             }
         }
     }
 }
 
 function loop() { window.requestAnimationFrame(loop); update(); render(); }
-startBtn.addEventListener('click', () => { startScreen.classList.add('hidden'); hud.classList.remove('hidden'); gameStarted = true; });
+
+startBtn.addEventListener('click', () => { 
+    startScreen.classList.add('hidden'); 
+    hud.classList.remove('hidden'); 
+    gameStarted = true; 
+});
+
 window.addEventListener('keydown', e => {
     if (gameState === 'AI_DIALOG') { aiDialogManager.handleInputEvents(e.code); return; }
     if(keys[e.code] !== undefined) keys[e.code] = true;
@@ -362,6 +511,5 @@ window.addEventListener('keydown', e => {
 });
 window.addEventListener('keyup', e => { if(keys[e.code] !== undefined) keys[e.code] = false; });
 
-// SPAWN AT BLOCK C2 (MAIN ROAD)
 loadMap('overworld', 30, 52);
 loop();
